@@ -9,6 +9,7 @@ Reusable Claude Code slash commands for development workflows.
 | Code Review | `/review` | Review uncommitted changes — correctness, security, performance |
 | Coding | `/code <task>` | Implement a feature or fix with read-plan-code-verify workflow |
 | R&D Agent | `/rd <task>` | Full R&D cycle: research, analyze, implement, verify, report |
+| QA | `/qa <target>` | Test audit, test plan, write missing tests, report coverage gaps |
 
 ## Installation
 
