@@ -2,21 +2,25 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SKILLS=(review.md code.md rd.md qa.md)
+SKILLS=(review.md rd.md qa.md)
+AGENTS=(code-explorer.md test-auditor.md solution-evaluator.md diff-critic.md security-auditor.md)
 
 usage() {
   cat <<EOF
 Usage: ./install.sh <mode> [options]
 
 Modes:
-  global            Install skills to ~/.claude/commands/ (available in all projects)
-  project [path]    Install skills to <path>/.claude/commands/ (default: current directory)
+  global            Install skills + agents to ~/.claude/ (available in all projects)
+  project [path]    Install skills + agents to <path>/.claude/ (default: current directory)
   submodule [path]  Add this repo as a git submodule and install to the project
 
 Options:
   --copy            Copy files instead of symlink (default on Windows)
   --link            Force symlink mode
-  --remove          Uninstall skills from target directory
+  --remove          Uninstall skills + agents from target directory
+
+Skills install to .claude/commands/ — invoked as /code, /qa, /rd, /review.
+Agents install to .claude/agents/    — invoked by the Agent tool from skills.
 
 Examples:
   ./install.sh global
@@ -27,51 +31,72 @@ EOF
 }
 
 detect_mode() {
-  # Default to copy on Windows (MINGW/MSYS), symlink elsewhere
   case "$(uname -s)" in
     MINGW*|MSYS*|CYGWIN*) echo "copy" ;;
     *) echo "link" ;;
   esac
 }
 
-install_skills() {
-  local target_dir="$1"
-  local method="$2"
+# install_files <src_dir> <target_dir> <method> <file...>
+install_files() {
+  local src_dir="$1"; shift
+  local target_dir="$1"; shift
+  local method="$1"; shift
 
   mkdir -p "$target_dir"
 
-  for skill in "${SKILLS[@]}"; do
-    local src="$SCRIPT_DIR/$skill"
-    local dst="$target_dir/$skill"
+  for file in "$@"; do
+    local src="$src_dir/$file"
+    local dst="$target_dir/$file"
 
     if [ ! -f "$src" ]; then
-      echo "  [SKIP] $skill not found"
+      echo "  [SKIP] $file not found"
       continue
     fi
 
-    # Remove existing file/symlink first
     [ -e "$dst" ] || [ -L "$dst" ] && rm -f "$dst"
 
     if [ "$method" = "link" ]; then
       ln -s "$src" "$dst"
-      echo "  [LINK] $skill -> $dst"
+      echo "  [LINK] $file -> $dst"
     else
       cp "$src" "$dst"
-      echo "  [COPY] $skill -> $dst"
+      echo "  [COPY] $file -> $dst"
     fi
   done
 }
 
-remove_skills() {
-  local target_dir="$1"
+remove_files() {
+  local target_dir="$1"; shift
 
-  for skill in "${SKILLS[@]}"; do
-    local dst="$target_dir/$skill"
+  for file in "$@"; do
+    local dst="$target_dir/$file"
     if [ -e "$dst" ] || [ -L "$dst" ]; then
       rm -f "$dst"
       echo "  [REMOVED] $dst"
     fi
   done
+}
+
+install_all() {
+  local claude_dir="$1"
+  local method="$2"
+
+  echo "Installing skills to $claude_dir/commands ($method) ..."
+  install_files "$SCRIPT_DIR"        "$claude_dir/commands" "$method" "${SKILLS[@]}"
+
+  echo "Installing agents to $claude_dir/agents ($method) ..."
+  install_files "$SCRIPT_DIR/agents" "$claude_dir/agents"   "$method" "${AGENTS[@]}"
+}
+
+remove_all() {
+  local claude_dir="$1"
+
+  echo "Removing skills from $claude_dir/commands ..."
+  remove_files "$claude_dir/commands" "${SKILLS[@]}"
+
+  echo "Removing agents from $claude_dir/agents ..."
+  remove_files "$claude_dir/agents"   "${AGENTS[@]}"
 }
 
 setup_submodule() {
@@ -94,8 +119,7 @@ setup_submodule() {
     echo "  [SUBMODULE] Added at .claude-skills"
   fi
 
-  # Install from submodule to .claude/commands/
-  install_skills "$project_dir/.claude/commands" "copy"
+  install_all "$project_dir/.claude" "copy"
 }
 
 # --- Main ---
@@ -121,23 +145,15 @@ done
 
 case "$MODE" in
   global)
-    TARGET="$HOME/.claude/commands"
-    if $REMOVE; then
-      echo "Removing skills from $TARGET ..."
-      remove_skills "$TARGET"
-    else
-      echo "Installing skills to $TARGET ($METHOD) ..."
-      install_skills "$TARGET" "$METHOD"
+    CLAUDE_DIR="$HOME/.claude"
+    if $REMOVE; then remove_all "$CLAUDE_DIR"
+    else             install_all "$CLAUDE_DIR" "$METHOD"
     fi
     ;;
   project)
-    TARGET="${TARGET_PATH:-.}/.claude/commands"
-    if $REMOVE; then
-      echo "Removing skills from $TARGET ..."
-      remove_skills "$TARGET"
-    else
-      echo "Installing skills to $TARGET ($METHOD) ..."
-      install_skills "$TARGET" "$METHOD"
+    CLAUDE_DIR="${TARGET_PATH:-.}/.claude"
+    if $REMOVE; then remove_all "$CLAUDE_DIR"
+    else             install_all "$CLAUDE_DIR" "$METHOD"
     fi
     ;;
   submodule)
