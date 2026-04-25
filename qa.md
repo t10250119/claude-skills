@@ -5,15 +5,17 @@ The user will describe what to test — a feature, module, API, or the full proj
 
 ## Process
 
-### 1. Scope Discovery
-- Read the relevant source code, configs, and existing tests to understand what is being tested.
-- Identify all public interfaces, user-facing flows, and integration points.
-- Map out dependencies (APIs, databases, third-party services, shared state).
+### 1. Scope Discovery & Test Audit (run in parallel)
 
-### 2. Existing Test Audit
-- Find all existing tests related to the target (unit, integration, e2e).
-- Assess coverage: what is tested, what is missing, what is outdated.
-- Check test quality: are assertions meaningful? Are edge cases covered? Are tests flaky?
+For non-trivial targets, spawn two subagents in parallel in a single message via the Agent tool:
+- `code-explorer` — map the source code under test: public interfaces, user flows, integration points, dependencies.
+- `test-auditor` — audit existing tests: framework, coverage, gaps, flaky/weak tests, recommended additions.
+
+For very small targets (one function, one config), read directly instead.
+
+### 2. Synthesize
+- Reconcile the two reports. Where the code-explorer found a public interface but the test-auditor found no coverage, that is a gap.
+- Note any contradictions or open questions to clarify with the user before writing tests.
 
 ### 3. Test Plan
 Generate a structured test plan covering:

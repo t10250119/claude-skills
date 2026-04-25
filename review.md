@@ -1,8 +1,9 @@
 Review the current uncommitted changes in this repository. Follow these steps:
 
 1. Run `git diff HEAD` to get all staged and unstaged changes.
-2. For each changed file, read the full file to understand the surrounding context.
-3. Perform a thorough code review covering:
+2. For non-trivial diffs, spawn the `security-auditor` subagent in parallel via the Agent tool to do a focused security pass. While it runs, continue with the rest of the review on the main thread.
+3. For each changed file, read the full file to understand the surrounding context.
+4. Perform the main review covering:
 
 ## Review Checklist
 
@@ -12,8 +13,8 @@ Review the current uncommitted changes in this repository. Follow these steps:
 - Are edge cases handled (empty collections, disconnected state, concurrent operations)?
 
 ### Security
-- Any injection risks, data leaks, or missing authorization checks?
-- Is user input validated at system boundaries?
+- Merge findings from the `security-auditor` subagent into your final report.
+- If you skipped the agent (trivial diff), do a quick pass yourself: injection, missing authz, exposed secrets, unvalidated input.
 
 ### Consistency
 - Does the new code match the existing project's style and patterns?
