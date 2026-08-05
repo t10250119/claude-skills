@@ -21,6 +21,7 @@ The skills delegate exploration and analysis work to specialized subagents (inst
 | `solution-evaluator` | `/rd` | Compares 2-4 design options on correctness/complexity/risk/maintainability |
 | `diff-critic` | `/rd` | Fresh-eye diff review for off-by-one, null risks, error path leaks, edge cases |
 | `security-auditor` | `/review`, `/rd` | Security-focused review: injection, authz, secrets, SSRF, weak crypto |
+| `poe-trade-pricer` | (standalone) | PoE1 item price check via the live official trade API through Claude in Chrome — never fabricates prices, reports real matched listings or says none were found |
 
 ## Installation
 
