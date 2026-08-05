@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SKILLS=(review.md rd.md qa.md)
-AGENTS=(code-explorer.md test-auditor.md solution-evaluator.md diff-critic.md security-auditor.md)
+AGENTS=(code-explorer.md test-auditor.md solution-evaluator.md diff-critic.md security-auditor.md poe-trade-pricer.md)
 
 usage() {
   cat <<EOF
